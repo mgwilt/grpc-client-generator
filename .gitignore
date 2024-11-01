@@ -1,0 +1,14 @@
+# Docker
+dist
+
+# Python
+__pycache__/
+*.pyc
+
+# C#
+bin/
+obj/
+
+# Swift
+.build/
+DerivedData/
