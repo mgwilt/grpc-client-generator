@@ -53,17 +53,6 @@ RUN wget -O /tmp/protoc.zip https://github.com/protocolbuffers/protobuf/releases
 RUN pip3 install --no-cache-dir grpcio grpcio-tools
 
 # ================================
-# Install .NET SDK
-# ================================
-RUN wget https://packages.microsoft.com/config/ubuntu/${UBUNTU_VERSION}/packages-microsoft-prod.deb -O packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends dotnet-sdk-8.0 && \
-    rm packages-microsoft-prod.deb && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# ================================
 # Install Swift
 # ================================
 RUN UBUNTU_VERSION_NO_DOT=$(echo $UBUNTU_VERSION | tr -d '.') && \
