@@ -36,6 +36,10 @@ Working on adding all of the above.
     ./scripts/build.sh [wire-format-mode]
     ```
 
+    ```powershell
+    ./scripts/build.ps1 -WireMode [wire-format-mode]
+    ```
+
    Wire format modes:
    - `grpcwebtext` (default)
    - `grpcweb`

@@ -1,77 +1,96 @@
-$ErrorActionPreference = 'Stop'
+param (
+    [Parameter(Position=0, Mandatory=$false)]
+    [ValidateSet("grpcwebtext", "grpcweb")]
+    [string]$WireMode = "grpcwebtext"
+)
 
-$WIRE_MODE = if ($args.Count -ge 1) { $args[0] } else { 'grpcwebtext' }
+# ================================
+# Define Project Directories
+# ================================
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$ProjectDir = Resolve-Path (Join-Path $ScriptDir "..")
+$SrcDir = Join-Path $ProjectDir "src"
+$DistDir = Join-Path $ProjectDir "dist"
 
-if ($WIRE_MODE -ne 'grpcwebtext' -and $WIRE_MODE -ne 'grpcweb') {
-    Write-Host "Invalid wire format mode: $WIRE_MODE"
-    Write-Host "Allowed values are: grpcwebtext, grpcweb"
-    exit 1
-}
+# Convert Windows paths to Unix-style paths for Docker compatibility
+$SrcDirUnix = $SrcDir -replace '\\', '/'
+$DistDirUnix = $DistDir -replace '\\', '/'
 
-$PROJECT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$SRC_DIR = Join-Path $PROJECT_DIR 'src'
-$DIST_DIR = Join-Path $PROJECT_DIR 'dist'
+$DockerImage = "grpc-client-gen"
 
-$DOCKER_IMAGE = 'grpc-client-gen'
-
+# ================================
+# Pre-build Checks and Setup
+# ================================
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker could not be found. Please install Docker and try again."
+    Write-Host "Docker could not be found. Please install Docker and try again." -ForegroundColor Red
     exit 1
 }
 
-New-Item -ItemType Directory -Force -Path (Join-Path $DIST_DIR 'python') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DIST_DIR 'swift') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DIST_DIR 'javascript') | Out-Null
-New-Item -ItemType Directory -Force -Path (Join-Path $DIST_DIR 'typescript') | Out-Null
+$SubDirectories = @("python", "swift", "javascript", "typescript")
+foreach ($Dir in $SubDirectories) {
+    $Path = Join-Path $DistDir $Dir
+    if (-not (Test-Path -Path $Path)) {
+        New-Item -ItemType Directory -Force -Path $Path | Out-Null
+        Write-Host "Created directory: $Path" -ForegroundColor Green
+    }
+}
 
-Write-Host "Building Docker image: $DOCKER_IMAGE"
-docker build -t $DOCKER_IMAGE .
+# ================================
+# Build Docker Image
+# ================================
+Write-Host "Building Docker image: $DockerImage" -ForegroundColor Cyan
+Push-Location $ProjectDir
+docker build -t $DockerImage .
+Pop-Location
+Write-Host "Docker image built successfully." -ForegroundColor Green
 
-Write-Host "Generating Python client library..."
+# ================================
+# Generate Python Client Library
+# ================================
+Write-Host "Generating Python client library..." -ForegroundColor Cyan
 docker run --rm `
-    -v "$SRC_DIR:/app/src" `
-    -v "$DIST_DIR:/app/dist" `
-    $DOCKER_IMAGE bash -c `
-    "python3 -m grpc_tools.protoc -I./src `
-    --python_out=./dist/python `
-    --grpc_python_out=./dist/python `
-    ./src/*.proto"
+    -v "${SrcDirUnix}:/app/src" `
+    -v "${DistDirUnix}:/app/dist" `
+    $DockerImage bash -c 'python3 -m grpc_tools.protoc -I./src --python_out=./dist/python --grpc_python_out=./dist/python ./src/*.proto'
+Write-Host "Python client library generated at ./dist/python" -ForegroundColor Green
 
-Write-Host "Generating Swift client library..."
+# ================================
+# Generate Swift Client Library
+# ================================
+Write-Host "Generating Swift client library..." -ForegroundColor Cyan
 docker run --rm `
-    -v "$SRC_DIR:/app/src" `
-    -v "$DIST_DIR:/app/dist" `
-    $DOCKER_IMAGE bash -c `
-    "mkdir -p ./dist/swift && `
-    protoc -I./src `
-    --swift_out=./dist/swift `
-    ./src/*.proto"
+    -v "${SrcDirUnix}:/app/src" `
+    -v "${DistDirUnix}:/app/dist" `
+    $DockerImage bash -c 'mkdir -p ./dist/swift && protoc -I./src --swift_out=./dist/swift ./src/*.proto'
+Write-Host "Swift client library generated at ./dist/swift" -ForegroundColor Green
 
-Write-Host "Generating JavaScript client library..."
+# ================================
+# Generate JavaScript Client Library
+# ================================
+Write-Host "Generating JavaScript client library..." -ForegroundColor Cyan
 docker run --rm `
-    -v "$SRC_DIR:/app/src" `
-    -v "$DIST_DIR:/app/dist" `
-    $DOCKER_IMAGE bash -c `
-    "mkdir -p ./dist/javascript && `
-    protoc -I./src `
-    --js_out=import_style=commonjs:./dist/javascript `
-    --grpc-web_out=import_style=commonjs,mode=$env:WIRE_MODE:./dist/javascript `
-    ./src/*.proto"
+    -v "${SrcDirUnix}:/app/src" `
+    -v "${DistDirUnix}:/app/dist" `
+    $DockerImage bash -c "mkdir -p ./dist/javascript && protoc -I./src --js_out=import_style=commonjs:./dist/javascript --grpc-web_out=import_style=commonjs,mode=${WireMode}:./dist/javascript ./src/*.proto"
+Write-Host "JavaScript client library generated at ./dist/javascript" -ForegroundColor Green
 
-Write-Host "Generating TypeScript client library..."
+# ================================
+# Generate TypeScript Client Library
+# ================================
+Write-Host "Generating TypeScript client library..." -ForegroundColor Cyan
 docker run --rm `
-    -v "$SRC_DIR:/app/src" `
-    -v "$DIST_DIR:/app/dist" `
-    $DOCKER_IMAGE bash -c `
-    "mkdir -p ./dist/typescript && `
-    protoc -I./src `
-    --grpc-web_out=import_style=typescript,mode=$env:WIRE_MODE:./dist/typescript `
-    ./src/*.proto"
+    -v "${SrcDirUnix}:/app/src" `
+    -v "${DistDirUnix}:/app/dist" `
+    $DockerImage bash -c "mkdir -p ./dist/typescript && protoc -I./src --grpc-web_out=import_style=typescript,mode=${WireMode}:./dist/typescript ./src/*.proto"
+Write-Host "TypeScript client library generated at ./dist/typescript" -ForegroundColor Green
 
-Write-Host "Client libraries generated successfully in the ./dist directory."
-Write-Host "Wire format mode used: $WIRE_MODE"
-Write-Host "Generated client libraries:"
-Write-Host "  - Python: ./dist/python"
-Write-Host "  - Swift: ./dist/swift"
-Write-Host "  - JavaScript: ./dist/javascript"
-Write-Host "  - TypeScript: ./dist/typescript"
+# ================================
+# Completion Message
+# ================================
+Write-Host "`nClient libraries generated successfully in the ./dist directory." -ForegroundColor Yellow
+Write-Host "Wire format mode used: $WireMode" -ForegroundColor Yellow
+Write-Host "Generated client libraries:" -ForegroundColor Yellow
+Write-Host "  - Python: ./dist/python" -ForegroundColor Yellow
+Write-Host "  - Swift: ./dist/swift" -ForegroundColor Yellow
+Write-Host "  - JavaScript: ./dist/javascript" -ForegroundColor Yellow
+Write-Host "  - TypeScript: ./dist/typescript`n" -ForegroundColor Yellow
