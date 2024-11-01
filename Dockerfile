@@ -1,7 +1,6 @@
 # ================================
 # Build Arguments
 # ================================
-
 ARG UBUNTU_VERSION=20.04
 
 # ================================
@@ -18,7 +17,9 @@ ENV UBUNTU_VERSION=${UBUNTU_VERSION}
 ENV PROTOC_VERSION=21.12
 ENV SWIFT_VERSION=6.0.2
 ENV SWIFT_PROTOBUF_VERSION=1.28.2
-ENV PATH="/usr/local/bin:${PATH}"
+ENV GRPC_WEB_VERSION=1.5.0
+ENV NODE_VERSION=20
+ENV PATH="/usr/local/bin:/usr/local/nodejs/bin:${PATH}"
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -37,7 +38,15 @@ RUN apt-get update && \
         libcurl4 \
         python3 \
         python3-pip \
+        curl \
     && rm -rf /var/lib/apt/lists/*
+
+# ================================
+# Install Node.js and npm
+# ================================
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    apt-get install -y nodejs && \
+    npm install -g npm@latest
 
 # ================================
 # Install protoc
@@ -46,6 +55,11 @@ RUN wget -O /tmp/protoc.zip https://github.com/protocolbuffers/protobuf/releases
     unzip /tmp/protoc.zip -d /usr/local && \
     chmod +x /usr/local/bin/protoc && \
     rm /tmp/protoc.zip
+
+# ================================
+# Install Protoc-JavaScript Plugin
+# ================================
+RUN npm install -g protoc-gen-js
 
 # ================================
 # Install gRPC Tools for Python
@@ -74,11 +88,18 @@ RUN git clone https://github.com/apple/swift-protobuf.git /tmp/swift-protobuf &&
     apt-get autoremove -y && \
     rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
+# ================================
+# Install gRPC-Web
+# ================================
+RUN wget -O /tmp/protoc-gen-grpc-web https://github.com/grpc/grpc-web/releases/download/${GRPC_WEB_VERSION}/protoc-gen-grpc-web-${GRPC_WEB_VERSION}-linux-x86_64 && \
+    wget -O /tmp/protoc-gen-grpc-web.sha256 https://github.com/grpc/grpc-web/releases/download/${GRPC_WEB_VERSION}/protoc-gen-grpc-web-${GRPC_WEB_VERSION}-linux-x86_64.sha256 && \
+    HASH=$(awk '{print $1}' /tmp/protoc-gen-grpc-web.sha256) && \
+    echo "${HASH}  /tmp/protoc-gen-grpc-web" | sha256sum -c - && \
+    chmod +x /tmp/protoc-gen-grpc-web && \
+    mv /tmp/protoc-gen-grpc-web /usr/local/bin/ && \
+    rm /tmp/protoc-gen-grpc-web.sha256
 
-# Copy source code
+WORKDIR /app
 COPY src/ ./src/
 
-# Default command
 CMD ["bash"]
