@@ -46,14 +46,15 @@ RUN apt-get update && \
 # ================================
 # Setup Kotlin Dependencies
 # ================================
+ENV KOTLIN_GRPC_JAR=/usr/local/lib/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar
+
 COPY ./scripts/protoc-gen-grpc-kotlin.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/protoc-gen-grpc-kotlin.sh && \
-    wget -O /tmp/protoc-gen-grpc-kotlin.jar https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar && \
-    wget -O /tmp/protoc-gen-grpc-kotlin.jar.sha256 https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar.sha256 && \
-    echo "$(cat /tmp/protoc-gen-grpc-kotlin.jar.sha256) /tmp/protoc-gen-grpc-kotlin.jar" | sha256sum -c && \
-    mkdir -p /usr/local/lib && \
-    mv /tmp/protoc-gen-grpc-kotlin.jar /usr/local/lib/ && \
-    rm /tmp/protoc-gen-grpc-kotlin.jar.sha256
+    wget -O "$KOTLIN_GRPC_JAR" https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar && \
+    chmod 644 "$KOTLIN_GRPC_JAR" && \
+    wget -O "${KOTLIN_GRPC_JAR}.sha256" https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar.sha256 && \
+    echo "$(cat ${KOTLIN_GRPC_JAR}.sha256) ${KOTLIN_GRPC_JAR}" | sha256sum -c && \
+    rm "${KOTLIN_GRPC_JAR}.sha256"
 
 # ================================
 # Install Node.js and npm

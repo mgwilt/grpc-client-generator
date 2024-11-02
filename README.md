@@ -1,6 +1,6 @@
 # gRPC Client Generator
 
-This tool simply takes proto files in ./src and generates client libraries for them. Hunting down and installing all of these dependencies got old fast.
+This tool simply takes proto files in ./src and generates client stubs for them. Hunting down and installing all of these dependencies got old fast.
 
 ## Client Output Languages
 
@@ -11,7 +11,7 @@ This tool simply takes proto files in ./src and generates client libraries for t
 | JavaScript |    ✅    |
 | TypeScript |    ✅    |
 | Java       |    ❌    |
-| Kotlin     |    ❌    |
+| Kotlin     |    ✅    |
 | Go         |    ❌    |
 | .NET       |    ❌    |
 
@@ -48,11 +48,12 @@ Working on adding all of the above.
    
 ## Usage
 
-Place your `.proto` files in the `src/` directory. Running the build script will generate the client libraries in the `dist/` directory:
+Place your `.proto` files in the `src/` directory. Running the build script will generate the client stubs in the `dist/` directory:
 
-- `dist/python`: Python client libraries
-- `dist/swift`: Swift client libraries
-- `dist/javascript`: JavaScript client libraries
-- `dist/typescript`: TypeScript client libraries
+- `dist/python`: Python client
+- `dist/swift`: Swift client
+- `dist/javascript`: JavaScript client
+- `dist/typescript`: TypeScript client
+- `dist/kotlin`: Kotlin client
 
 Each language-specific directory will contain the generated gRPC client code ready for use in your projects.
