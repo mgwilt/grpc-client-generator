@@ -37,6 +37,7 @@ mkdir -p "$DIST_DIR/python"
 mkdir -p "$DIST_DIR/swift"
 mkdir -p "$DIST_DIR/javascript"
 mkdir -p "$DIST_DIR/typescript"
+mkdir -p "$DIST_DIR/kotlin"
 
 # ================================
 # Build Docker Image
@@ -71,6 +72,25 @@ docker run --rm \
         mkdir -p ./dist/swift && \
         protoc -I./src \
         --swift_out=./dist/swift \
+        ./src/*.proto
+    "
+
+# ================================
+# Generate Kotlin Client Library
+# ================================
+echo "Generating Kotlin client library..."
+mkdir -p "$DIST_DIR/kotlin"
+docker run --rm \
+    -v "$SRC_DIR":/app/src \
+    -v "$DIST_DIR":/app/dist \
+    "$DOCKER_IMAGE" bash -c "\
+        mkdir -p ./dist/kotlin && \
+        KOTLIN_GRPC_JAR=/usr/local/lib/protoc-gen-grpc-kotlin-1.4.1-jdk8.jar && \
+        test -f \$KOTLIN_GRPC_JAR && \
+        protoc -I./src \
+        --kotlin_out=./dist/kotlin \
+        --plugin=protoc-gen-grpckt=/usr/local/bin/protoc-gen-grpc-kotlin.sh \
+        --grpckt_out=./dist/kotlin \
         ./src/*.proto
     "
 
@@ -115,3 +135,4 @@ echo "  - Python: ./dist/python"
 echo "  - Swift: ./dist/swift"
 echo "  - JavaScript: ./dist/javascript"
 echo "  - TypeScript: ./dist/typescript"
+echo "  - Kotlin: ./dist/kotlin"

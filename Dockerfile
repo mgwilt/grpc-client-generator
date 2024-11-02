@@ -19,6 +19,7 @@ ENV SWIFT_VERSION=6.0.2
 ENV SWIFT_PROTOBUF_VERSION=1.28.2
 ENV GRPC_WEB_VERSION=1.5.0
 ENV NODE_VERSION=20
+ENV KOTLIN_GRPC_VERSION=1.4.1
 ENV PATH="/usr/local/bin:/usr/local/nodejs/bin:${PATH}"
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
@@ -39,7 +40,21 @@ RUN apt-get update && \
         python3 \
         python3-pip \
         curl \
+        openjdk-21-jdk \
     && rm -rf /var/lib/apt/lists/*
+
+# ================================
+# Setup Kotlin Dependencies
+# ================================
+ENV KOTLIN_GRPC_JAR=/usr/local/lib/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar
+
+COPY ./scripts/protoc-gen-grpc-kotlin.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/protoc-gen-grpc-kotlin.sh && \
+    wget -O "$KOTLIN_GRPC_JAR" https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar && \
+    chmod 644 "$KOTLIN_GRPC_JAR" && \
+    wget -O "${KOTLIN_GRPC_JAR}.sha256" https://repo1.maven.org/maven2/io/grpc/protoc-gen-grpc-kotlin/${KOTLIN_GRPC_VERSION}/protoc-gen-grpc-kotlin-${KOTLIN_GRPC_VERSION}-jdk8.jar.sha256 && \
+    echo "$(cat ${KOTLIN_GRPC_JAR}.sha256) ${KOTLIN_GRPC_JAR}" | sha256sum -c && \
+    rm "${KOTLIN_GRPC_JAR}.sha256"
 
 # ================================
 # Install Node.js and npm
