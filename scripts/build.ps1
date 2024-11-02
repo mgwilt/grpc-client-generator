@@ -71,7 +71,7 @@ Write-Host "Generating Kotlin client library..." -ForegroundColor Cyan
 docker run --rm `
     -v "${SrcDirUnix}:/app/src" `
     -v "${DistDirUnix}:/app/dist" `
-    $DockerImage bash -c 'mkdir -p ./dist/kotlin && protoc -I./src --plugin=protoc-gen-grpckt=/app/protoc-gen-grpc-kotlin.sh --kotlin_out=./dist/kotlin --grpckt_out=./dist/kotlin ./src/*.proto'
+    $DockerImage bash -c 'mkdir -p ./dist/kotlin && KOTLIN_GRPC_JAR=/usr/local/lib/protoc-gen-grpc-kotlin-1.4.1-jdk8.jar && test -f $KOTLIN_GRPC_JAR && protoc -I./src --kotlin_out=./dist/kotlin --plugin=protoc-gen-grpckt=/usr/local/bin/protoc-gen-grpc-kotlin.sh --grpckt_out=./dist/kotlin ./src/*.proto'
 Write-Host "Kotlin client library generated at ./dist/kotlin" -ForegroundColor Green
 
 
