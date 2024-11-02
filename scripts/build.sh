@@ -37,6 +37,7 @@ mkdir -p "$DIST_DIR/python"
 mkdir -p "$DIST_DIR/swift"
 mkdir -p "$DIST_DIR/javascript"
 mkdir -p "$DIST_DIR/typescript"
+mkdir -p "$DIST_DIR/kotlin"
 
 # ================================
 # Build Docker Image
@@ -133,3 +134,4 @@ echo "  - Python: ./dist/python"
 echo "  - Swift: ./dist/swift"
 echo "  - JavaScript: ./dist/javascript"
 echo "  - TypeScript: ./dist/typescript"
+echo "  - Kotlin: ./dist/kotlin"
