@@ -75,6 +75,24 @@ docker run --rm \
     "
 
 # ================================
+# Generate Kotlin Client Library
+# ================================
+echo "Generating Kotlin client library..."
+mkdir -p "$DIST_DIR/kotlin"
+docker run --rm \
+    -v "$SRC_DIR":/app/src \
+    -v "$DIST_DIR":/app/dist \
+    "$DOCKER_IMAGE" bash -c "\
+        mkdir -p ./dist/kotlin && \
+        protoc -I./src \
+        --plugin=protoc-gen-grpckt=/app/protoc-gen-grpc-kotlin.sh \
+        --kotlin_out=./dist/kotlin \
+        --grpckt_out=./dist/kotlin \
+        ./src/*.proto
+    "
+
+
+# ================================
 # Generate JavaScript Client Library
 # ================================
 echo "Generating JavaScript client library..."
